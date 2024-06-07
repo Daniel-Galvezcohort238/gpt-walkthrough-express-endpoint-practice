@@ -12,7 +12,8 @@ const pool = mysql.createPool({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
-  database: process.env.DB_DATABASE
+  database: process.env.DB_DATABASE,
+  port: process.env.DB_PORT || 3306
 });
 
 app.use(async function(req, res, next) {
@@ -52,49 +53,58 @@ app.get('/cars', async function(req, res) {
 app.post('/car', async function(req, res) {
   try {
     const { make, model, year } = req.body;
+    console.log('Received data:', { make, model, year });
 
-    await req.db.query(
-      `INSERT INTO car (make, model, year) VALUES (?, ?, ?)`,
-      [make, model, year]
-    );
+    const result = await req.db.query(
+        `INSERT INTO car (make, model, year) VALUES (?, ?, ?);`,
+        [make, model, year]
+      );
+      console.log('Insert result:', result);
+
 
     res.json({ success: true, message: 'Car successfully created' });
   } catch (err) {
+    console.error('Error inserting data:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
 // PUT endpoint to update a specific car
 app.put('/car/:id', async function(req, res) {
-  try {
-    const { id } = req.params;
-    const { make, model, year } = req.body;
-
-    await req.db.query(
-      `UPDATE car SET make = ?, model = ?, year = ? WHERE id = ?`,
-      [make, model, year, id]
-    );
-
-    res.json({ success: true, message: 'Car successfully updated' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+    try {
+      const { id } = req.params;
+      const { make, model, year } = req.body;
+  
+      const result = await req.db.query(
+        `UPDATE car SET make = ?, model = ?, year = ? WHERE id = ?`,
+        [make, model, year, id]
+      );
+      console.log('Update result:', result);
+  
+      res.json({ success: true, message: 'Car successfully updated' });
+    } catch (err) {
+      console.error('Error updating data:', err);
+      res.status(500).json({ success: false, message: err.message });
+    }
+  });
+  
 
 // DELETE endpoint to soft delete a car
 app.delete('/car/:id', async function(req, res) {
-  try {
-    const { id } = req.params;
-
-    await req.db.query(
-      `UPDATE car SET deleted_flag = 1 WHERE id = ?`,
-      [id]
-    );
-
-    res.json({ success: true, message: 'Car successfully deleted' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+    try {
+      const { id } = req.params;
+  
+      const result = await req.db.query(
+        `UPDATE car SET deleted_flag = 1 WHERE id = ?`,
+        [id]
+      );
+      console.log('Delete result:', result);
+  
+      res.json({ success: true, message: 'Car successfully deleted' });
+    } catch (err) {
+      console.error('Error deleting data:', err);
+      res.status(500).json({ success: false, message: err.message });
+    }
+  });
 
 app.listen(port, () => console.log(`API listening on http://localhost:${port}`));
